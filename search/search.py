@@ -87,82 +87,53 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    """
-    startingNode = problem.getStartState()
-    if problem.isGoalState(startingNode):
-        return []
-
-    myStack = util.Stack()
-    visitedNodes = []
+    stack = util.Stack()
+    start = problem.getStartState()
+    visited = []
     # (node, actions)
-    myStack.push((startingNode, []))
+    stack.push((start, []))
 
-    while not myStack.isEmpty():
-        currentNode, actions = myStack.pop()
+    while not stack.isEmpty():
+        state, actions = stack.pop()
 
-        if problem.isGoalState(currentNode):
+        if problem.isGoalState(state):
             return actions
 
-        if currentNode not in visitedNodes:
-            visitedNodes.append(currentNode)
-
-            for successor in problem.getSuccessors(currentNode):
-                nextNode, action, cost = successor
-                if nextNode not in visitedNodes:
+        if state not in visited:
+            visited.append(state)
+            for successor in problem.getSuccessors(state):
+                nextState, action, cost = successor
+                if nextState not in visited:
                     newAction = actions + [action]
-                    myStack.push((nextNode, newAction))
-    """
-    fringe = util.Stack()
-    visitedNodes = [problem.getStartState()]
-    path = []
-    fringe.push((problem.getStartState(), 'Start', 0, path))
+                    stack.push((nextState, newAction))
 
-    while not fringe.isEmpty():
-        curr, direction, depth, path = fringe.pop()
-
-        if problem.isGoalState(curr):
-            return path
-
-        successors = problem.getSuccessors(curr)
-
-        for node in successors:
-            if node[0] not in visitedNodes:
-                fringe.push((node[0], node[1], node[2], path + [node[1]]))
-                print(path+[node[1]])
-                visitedNodes += [curr]
-
-
-
-    return path
+    return []
     util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    startingNode = problem.getStartState()
-    if problem.isGoalState(startingNode):
-        return []
-
-    myQueue = util.Queue()
-    visitedNodes = []
+    queue = util.Queue()
+    start = problem.getStartState()
+    visited = []
     # (node, actions)
-    myQueue.push((startingNode, []))
+    queue.push((start, []))
 
-    while not myQueue.isEmpty():
-        currentNode, actions = myQueue.pop()
+    while not queue.isEmpty():
+        state, actions = queue.pop()
 
-        if problem.isGoalState(currentNode):
+        if problem.isGoalState(state):
             return actions
 
-        if currentNode not in visitedNodes:
-            visitedNodes.append(currentNode)
-
-            for successor in problem.getSuccessors(currentNode):
-                nextNode, action, cost = successor
-                if nextNode not in visitedNodes:
+        if state not in visited:
+            visited.append(state)
+            for successor in problem.getSuccessors(state):
+                nextState, action, cost = successor
+                if nextState not in visited:
                     newAction = actions + [action]
-                    myQueue.push((nextNode, newAction))
+                    queue.push((nextState, newAction))
 
+    return []
     util.raiseNotDefined()
 
 def uniformCostSearch(problem):
@@ -189,6 +160,7 @@ def uniformCostSearch(problem):
                 if nextState not in expanded:
                     frontier.push((nextState, actions + [action]), priority + cost)
 
+    return []
     util.raiseNotDefined()
 
 def nullHeuristic(state, problem=None):
@@ -227,6 +199,8 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 next_f = next_g + next_h
                 if nextState not in expanded:
                     frontier.push((nextState, actions + [action], next_g), next_f)
+
+    return []
     util.raiseNotDefined()
 
 
