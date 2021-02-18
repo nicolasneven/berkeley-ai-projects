@@ -40,6 +40,7 @@ from game import Actions
 import util
 import time
 import search
+import math
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -288,14 +289,15 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
-
+        # self.visualize = True
+        # self._visited, self._visistedlist = {}, []
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
         "*** YOUR CODE HERE ***"
-
+        return (self.startingPosition, self.corners)
         util.raiseNotDefined()
 
     def isGoalState(self, state):
@@ -303,7 +305,11 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
+        _, unvisitedCorners = state
 
+        isGoal = len(unvisitedCorners) == 0
+
+        return isGoal
         util.raiseNotDefined()
 
     def getSuccessors(self, state):
@@ -316,19 +322,47 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
+        # Add a successor state to the successor list if the action is legal
+        # Here's a code snippet for figuring out whether a new position hits a wall:
+        #   x,y = currentPosition
+        #   dx, dy = Actions.directionToVector(action)
+        #   nextx, nexty = int(x + dx), int(y + dy)
+        #   hitsWall = self.walls[nextx][nexty]
 
+        # Initialise list of successors
         successors = []
+        # for each direction,
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            # Add a successor state to the successor list if the action is legal
-            # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            position, unvisitedCorners = state
+
+            # split the position into x and y direction
+            x,y = position
+
+            # determine next position after action
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+
+            # make sure next position is not a wall
+            if not self.walls[nextx][nexty]:
+                nextPosition = (nextx, nexty)
+                cost = 1
+
+                # if the next position is a corner we haven't visited yet
+                if nextPosition in unvisitedCorners:
+                    # copy the list of corners that have not been visited
+                    nextCorners = unvisitedCorners.copy()
+                    # remove the next position from the corners list
+                    nextCorners.remove(nextPosition)
+                    # append this successor to the successor list
+                    successors.append(((nextPosition, nextCorners), action, cost))
+                # otherwise we don't update the corners list and append normally
+                else:
+                    successors.append(((nextPosition, unvisitedCorners), action, cost))
 
         self._expanded += 1 # DO NOT CHANGE
+
         return successors
 
     def getCostOfActions(self, actions):
@@ -362,8 +396,51 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+    position, corners = state
+    # lists are passed by reference; thus we need to copy the contents
+    # of the list into a new object with a new reference or else we'll
+    # change the value of the list used by the method that calls this heuristic
+    unvisitedCorners = corners.copy()
 
-    return 0 # Default to trivial solution
+    # initialize heuristic to zero
+    h = 0
+
+    # while there exist unvisited corners
+    while len(unvisitedCorners) != 0:
+
+        x1,y1 = position
+
+        # initialise the distances list
+        distances = []
+
+        # for all the corners that are unvisited,
+        for corner in unvisitedCorners:
+
+            x2,y2 = corner
+
+            # find the distance from the current position to the corner
+            euclideandistance = math.sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2))
+            manhattandistance = abs(x1 - x2) + abs(y1 - y2)
+            distances.append(manhattandistance)
+
+        # find the minimum distance to a corner (ties are okay, especially
+        # since this is a greedy approximation)
+        minDistance = min(distances)
+
+        # returns the closest corner by indexing on minDistance
+        mindex = distances.index(minDistance)
+        closestCorner = unvisitedCorners[mindex]
+
+        # add this minDistance to the heuristic
+        h += minDistance
+
+        # "visit" this corner by changing the position to this corner
+        # and removing it from the list of unvisited corners
+        position = closestCorner
+        unvisitedCorners.remove(closestCorner)
+
+    # return the heuristic
+    return h
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
