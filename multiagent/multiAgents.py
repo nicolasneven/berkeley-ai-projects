@@ -109,7 +109,7 @@ class MultiAgentSearchAgent(Agent):
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
-    Your minimax agent (question 2)
+    Your minimax agent (question 1)
     """
 
     def getAction(self, gameState):
@@ -175,7 +175,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
-    Your minimax agent with alpha-beta pruning (question 3)
+    Your minimax agent with alpha-beta pruning (question 2)
     """
 
     def getAction(self, gameState):
@@ -245,7 +245,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
-      Your expectimax agent (question 4)
+      Your expectimax agent (question 3)
     """
 
     def getAction(self, gameState):
@@ -303,7 +303,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 def betterEvaluationFunction(currentGameState):
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-    evaluation function (question 5).
+    evaluation function (question 4).
 
     DESCRIPTION: <write something here so we know what you did>
     """
