@@ -16,8 +16,7 @@ from util import manhattanDistance
 from game import Directions
 import random, util
 
-from game import Agent,Actions
-import math
+from game import Agent
 
 class ReflexAgent(Agent):
     """
@@ -107,6 +106,7 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
     Your minimax agent (question 1)
@@ -126,7 +126,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.getNextState(agentIndex, action):
         Returns the child game state after an agent takes an action
 
-        gameState.getNumAgents():
+        gameState.getNumGhost():
         Returns the total number of agents in the game
 
         gameState.isWin():
@@ -136,99 +136,90 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        #util.raiseNotDefined()
-
-        def MinValue(state,depth,ghost_num):
+        def max_value(state, depth):
             if state.isWin() or state.isLose() or depth == self.depth:
                 return self.evaluationFunction(state)
-            v = math.inf
+            v = -float('inf')
+            LegalActions = state.getLegalActions(0)  # action of pacman
+            for action in LegalActions:
+                v = max(v, min_value(state.getNextState(0, action), depth, 1))
+            return v
 
-            for action in state.getLegalActions(ghost_num):
-                if ghost_num == gameState.getNumGhost(): ## last ghost
-                    v = min(v, MaxValue(state.getNextState(ghost_num, action), depth + 1))
+        def min_value(state, depth, ghostIdx):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            v = float('inf')
+            LegalActions = state.getLegalActions(ghostIdx)  # action of ghost of ghostIdx
+            for action in LegalActions:
+                newState = state.getNextState(ghostIdx, action)
+                if ghostIdx == state.getNumGhost():  # if this is the last ghost
+                    v = min(v, max_value(newState, depth+1))
                 else:
-                    v = min(v, MinValue(state.getNextState(ghost_num, action), depth, ghost_num + 1))
-
+                    v = min(v, min_value(newState, depth, ghostIdx+1))
             return v
 
-        def MaxValue(state, depth):
-            if state.isWin() or state.isLose() or depth == self.depth:
-                return self.evaluationFunction(state)
-            v = -math.inf
-            for action in state.getLegalActions(0):
-                v = max(v, MinValue(state.getNextState(0, action),depth,1))
-            return v
+        v = -float('inf')
+        LegalActions = gameState.getLegalActions(0)
+        best_a = LegalActions[0]
+        for action in LegalActions:
+            new_v = min_value(gameState.getNextState(0, action), 0, 1)
+            if new_v > v:
+                v = new_v
+                best_a = action
+        return best_a
 
-        action_score = []
-        for action in gameState.getLegalActions(0):
-            action_score.append((action,MinValue(gameState.getNextState(0, action), 0, 1)))
-
-        sorted_action = sorted(action_score, key = lambda x: x[1],reverse=True)
-
-        return sorted_action[0][0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 2)
     """
-
     def getAction(self, gameState):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        #util.raiseNotDefined()
-
-
-        def MinValue(state,depth,ghost_num,alpha,beta):
+        def max_value(state, depth, alpha, beta):
             if state.isWin() or state.isLose() or depth == self.depth:
                 return self.evaluationFunction(state)
-            v = math.inf
-
-            for action in state.getLegalActions(ghost_num):
-                if ghost_num == gameState.getNumGhost(): ## last ghost
-                    retV = MaxValue(state.getNextState(ghost_num, action), depth + 1,alpha,beta)
-                    if type(retV) is tuple:
-                        retV = retV[1]
-                    v = min(v,retV)
-                    if v < alpha:
-                        return v
-                    beta = min(v,beta)
-                else:
-                    retV = MinValue(state.getNextState(ghost_num, action), depth, ghost_num + 1,alpha,beta)
-                    if type(retV) is tuple:
-                        retV = retV[1]
-                    v = min(v, retV )
-                    if v < alpha:
-                        return (action,v)
-                    beta = min(v,beta)
-
-            return (action,v)
-
-        def MaxValue(state, depth,alpha,beta):
-            cur_action = None
-            if state.isWin() or state.isLose() or depth == self.depth:
-                return self.evaluationFunction(state)
-            v = -math.inf
-            for action in state.getLegalActions(0):
-                retV =MinValue(state.getNextState(0, action),depth,1,alpha,beta)
-                if type(retV) is tuple:
-                    retV = retV[1]
-                if retV >=v: # get new high value for max and  associated action
-                    v = retV
-                    cur_action = action
+            v = -float('inf')
+            LegalActions = state.getLegalActions(0)  # action of pacman
+            for action in LegalActions:
+                newState = state.getNextState(0, action)
+                v = max(v, min_value(newState, depth, 1, alpha, beta))
                 if v > beta:
+                    return v
+                alpha = max(alpha, v)
+            return v
 
-                    return (cur_action,v)
-                alpha = max(alpha,v)
-            return (cur_action,v)
+        def min_value(state, depth, ghostIdx, alpha, beta):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            v = float('inf')
+            LegalActions = state.getLegalActions(ghostIdx)  # action of ghost of ghostIdx
+            for action in LegalActions:
+                newState = state.getNextState(ghostIdx, action)
+                if ghostIdx == gameState.getNumGhost():  # if this is the last ghost
+                    v = min(v, max_value(newState, depth + 1, alpha, beta))
+                else:
+                    v = min(v, min_value(newState, depth, ghostIdx + 1, alpha, beta))
+                if v < alpha:
+                    return v
+                beta = min(beta, v)
+            return v
 
-        alpha = -1*math.inf
-        beta = math.inf
+        alpha, beta = -float('inf'), float('inf')
+        v = -float('inf')
+        LegalActions = gameState.getLegalActions(0)
+        best_a = LegalActions[0]
+        for action in LegalActions:
+            newState = gameState.getNextState(0, action)
+            new_v = min_value(newState, 0, 1, alpha, beta)
+            if new_v > v:
+                v = new_v
+                best_a = action
+            alpha = max(alpha, v)
+        return best_a
 
-        v = MaxValue(gameState, 0, alpha,beta)
-
-        return v[0]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -243,49 +234,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        #util.raiseNotDefined()
+        def max_value(state, depth):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            v = -float('inf')
+            LegalActions = state.getLegalActions(0)  # action of pacman
+            for action in LegalActions:
+                v = max(v, exp_value(state.getNextState(0, action), depth, 1))
+            return v
 
-
-        def ExpMinValue(state, depth, ghost_num):
+        def exp_value(state, depth, ghostIdx):
             if state.isWin() or state.isLose() or depth == self.depth:
                 return self.evaluationFunction(state)
             v = 0
-
-            prob = 1/ len(gameState.getLegalActions(ghost_num))
-
-            for action in state.getLegalActions(ghost_num):
-                if ghost_num == gameState.getNumGhost():  ## last ghost
-                    retV = MaxValue(state.getNextState(ghost_num, action), depth + 1)
+            LegalActions = state.getLegalActions(ghostIdx)
+            p = 1.0 / len(LegalActions)
+            for action in LegalActions:
+                newState = state.getNextState(ghostIdx, action)
+                if ghostIdx == gameState.getNumGhost():  # if this is the last ghost
+                    v += max_value(newState, depth+1) * p
                 else:
-                    retV = ExpMinValue(state.getNextState(ghost_num, action), depth, ghost_num + 1)
+                    v += exp_value(newState, depth, ghostIdx + 1) * p
+            return v
 
-                if type(retV) is tuple:
-                    retV = retV[1]
+        LegalActions = gameState.getLegalActions(0)
+        v = -float('inf')
+        best_a = LegalActions[0]
+        for action in LegalActions:
+            new_v = exp_value(gameState.getNextState(0, action), 0, 1)
+            if new_v > v:
+                v = new_v
+                best_a = action
+        return best_a
 
-
-                v += retV
-
-            v *= prob
-            return (action,v)
-
-        def MaxValue(state, depth):
-
-            if state.isWin() or state.isLose() or depth == self.depth:
-                return self.evaluationFunction(state)
-            v = -math.inf
-            cur_action = None
-            for action in state.getLegalActions(0):
-                retV = ExpMinValue(state.getNextState(0, action), depth, 1)
-
-                if type(retV) is tuple:
-                   retV = retV[1]
-                if retV >=v: # get new high value for max and  associated action
-                    v = retV
-                    cur_action = action
-            return (cur_action,v)
-
-        retV = MaxValue(gameState, 0)
-        return retV[0]
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -295,69 +276,16 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    #util.raiseNotDefined()
     position = currentGameState.getPacmanPosition()
-    score = currentGameState.getScore()
-    ghostStates = currentGameState.getGhostStates()
-    foodList = currentGameState.getFood().asList()
+    foods = currentGameState.getFood().asList()
+    closestFoodDis = min(manhattanDistance(position, food) for food in foods) if foods else 0.5
     capsuleList = currentGameState.getCapsules()
+    closestCapsuleDis = min(manhattanDistance(position, capsule) for capsule in capsuleList) if capsuleList else 0.5
+    score = currentGameState.getScore()
 
-    if currentGameState.isWin(): return math.inf
-    if currentGameState.isLose(): return -math.inf
+    evaluation = 10 * 1.0 / closestFoodDis + 35 * 1.0 / closestCapsuleDis + 5.0 * score
+    return evaluation
 
-    min_ghost = math.inf
-    for ghost in ghostStates:
-        d = manhattanDistance(position, ghost.getPosition())
-        min_ghost = min(d,min_ghost)
-        if ghost.scaredTimer > 6 and d < 2:
-            return math.inf
-        elif ghost.scaredTimer < 5 and d < 2:
-            return -math.inf
-
-    # Distance to closest food pellet
-    # Note that at least one food pellet must exist,
-    # otherwise we would have already won!
-    foodDistance = 1.0/closestItemDistance(currentGameState, foodList)
-
-    # Distance to closest capsule
-    capsuleDistance = closestItemDistance(currentGameState, capsuleList)
-    capsuleDistance = 0.0 if capsuleDistance is None else 1.0/capsuleDistance
-
-    return 10.0*foodDistance + 5.0*score + 0.5*capsuleDistance - 1.0 * min_ghost
-
-
-## bfs to find cloest maze distance in the item list
-def closestItemDistance(currentGameState, items):
-    """Returns the maze distance to the closest item present in items"""
-
-    # BFS to find the maze distance from position to closest item
-    walls = currentGameState.getWalls()
-
-    start = currentGameState.getPacmanPosition()
-
-    # Dictionary storing the maze distance from start to any given position
-    distance = {start: 0}
-
-    # Set of visited positions in order to avoid revisiting them again
-    visited = {start}
-
-    queue = util.Queue()
-    queue.push(start)
-
-    while not queue.isEmpty():
-        position = x, y = queue.pop()
-        if position in items: return distance[position]
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-            dx, dy = Actions.directionToVector(action)
-            next_position = nextx, nexty = int(x + dx), int(y + dy)
-
-            if not walls[nextx][nexty] and next_position not in visited:
-                queue.push(next_position)
-                visited.add(next_position)
-                # A single action separates position from next_position, so the distance is 1
-                distance[next_position] = distance[position] + 1
-
-    return None
 
 # Abbreviation
 better = betterEvaluationFunction
