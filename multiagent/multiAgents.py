@@ -149,6 +149,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 else:
                     v = min(v, MinValue(state.getNextState(ghost_num, action), depth, ghost_num + 1))
 
+            # print(v)
             return v
 
         def MaxValue(state, depth):
@@ -165,6 +166,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         sorted_action = sorted(action_score, key = lambda x: x[1],reverse=True)
 
+        # print(sorted_action[0][0])
         return sorted_action[0][0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -198,7 +200,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     retV = MinValue(state.getNextState(ghost_num, action), depth, ghost_num + 1,alpha,beta)
                     if type(retV) is tuple:
                         retV = retV[1]
-                    v = min(v, retV )
+                    v = min(v, retV)
                     if v < alpha:
                         return (action,v)
                     beta = min(v,beta)
@@ -214,7 +216,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 retV =MinValue(state.getNextState(0, action),depth,1,alpha,beta)
                 if type(retV) is tuple:
                     retV = retV[1]
-                if retV >=v: # get new high value for max and  associated action
+                if retV >=v: # get new high value for max and associated action
                     v = retV
                     cur_action = action
                 if v > beta:
@@ -318,12 +320,13 @@ def betterEvaluationFunction(currentGameState):
     # Note that at least one food pellet must exist,
     # otherwise we would have already won!
     foodDistance = 1.0/closestItemDistance(currentGameState, foodList)
+    # print(foodDistance)
 
     # Distance to closest capsule
     capsuleDistance = closestItemDistance(currentGameState, capsuleList)
     capsuleDistance = 0.0 if capsuleDistance is None else 1.0/capsuleDistance
 
-    return 10.0*foodDistance + 5.0*score + 0.5*capsuleDistance - 1.0 * min_ghost
+    return 10.0*foodDistance + 5.0*score + 0.5*capsuleDistance - (1.0 / min_ghost)
 
 
 ## bfs to find cloest maze distance in the item list
