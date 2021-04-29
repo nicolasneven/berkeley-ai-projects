@@ -48,10 +48,11 @@ def value_iteration(env, gamma=0.95, theta=0.0001): # Do not change variables
             of moving right, up and down are all 0%.
     '''
 
-    nS = env.nS # number of states
-    nA = env.nA # number of actions
-    envP = env.P # environment dynamics model, e.g. {0: [], 1: , 2: , 3:}
 
+    nS = env.nS # number of states - 16
+    nA = env.nA # number of actions - 4
+    envP = env.P # environment dynamics model, e.g. {0: [], 1: , 2: , 3:}
+    
     V = np.zeros(nS) # initialize array of state values with all zeros
     policy = np.ones([nS, nA]) / nA  # dummy policy which has 0.25 probability for each action at any state.
     # Replace this policy with your implementation
@@ -72,6 +73,8 @@ def value_iteration(env, gamma=0.95, theta=0.0001): # Do not change variables
         if delta < theta:
             break
 
+    print(V) # size 16
+
     # extract the determinstic policy with optimal state values
     for s in range(nS):
         # Find best action based on optimal state-value
@@ -79,9 +82,12 @@ def value_iteration(env, gamma=0.95, theta=0.0001): # Do not change variables
         for a in range(nA):
             for prob, next_state, reward, done in envP[s][a]:
                 q[a] += prob * (reward + gamma * V[next_state])
-
+        # print(q) size 4
         best_a = np.argwhere(q == np.max(q)).flatten() # gives the position of largest q value
-        policy[s] = np.sum([np.eye(nA)[i] for i in best_a], axis=0) / len(best_a)
+        p = np.sum([np.eye(nA)[i] for i in best_a], axis=0) / len(best_a)
+        print(p)
+        policy[s] = p;
+        # print("State: " + str(s) + " - Best action: " + np.array2string(best_a) + " - Policy: " + np.array2string(policy[s]))
     #==========================================
     return policy
 
@@ -126,6 +132,7 @@ def policy_evaluation(policy, env, gamma=0.95, theta=0.0001): # Do not change th
         if delta < theta:
             break
     #==========================================
+    # print(V)
     return V # Do not change this line
 
 
@@ -171,11 +178,13 @@ def policy_iteration(env, gamma=0.95, theta=0.0001):
     while True:
         # 1. Policy evaluation
         V = policy_evaluation(policy, env, gamma, theta)
-
+        # print("V=")
+        # print(V)
         # 2. Policy improvement
         policy_stable = True
         for s in range(nS):
             old_a = np.argwhere(policy[s] == np.max(policy[s])).flatten()  # action from the old policy
+            # print(s, old_a)
             # Loop through each action to find the best action from the updated policy
             q = np.zeros(nA)
             for a in range(nA):
@@ -185,7 +194,10 @@ def policy_iteration(env, gamma=0.95, theta=0.0001):
                     q[a] += prob * (reward + gamma * V[next_state])
 
             best_a = np.argwhere(q == np.max(q)).flatten()
-            policy[s] = np.sum([np.eye(nA)[i] for i in best_a], axis=0) / len(best_a)
+            p = np.sum([np.eye(nA)[i] for i in best_a], axis=0) / len(best_a)
+            print(p)
+            policy[s] = p
+            # print("State: " + str(s) + " - Best action: " + np.array2string(best_a) + " - Policy: " + np.array2string(policy[s]))
 
             if not np.array_equal(old_a, best_a):
                 policy_stable = False
